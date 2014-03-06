@@ -45,7 +45,6 @@
 ******************************************************************************
 */
 #include "platform.h"
-#include "led.h"
 
 /*
 ******************************************************************************
@@ -55,12 +54,6 @@
 
 #define BOARD_PIN_TRANSPARENT_MODE_RCV _LAT(AS3911_PIN_TM)
 #define BOARD_PIN_AS3911_SEN           _LAT(AS3911_PIN_SEN)
-
-/* Defines for leds */
-#define BOARD_LED1                     _LAT(LED1_PIN)
-#define BOARD_LED2                     _LAT(LED2_PIN)
-#define BOARD_LED3                     _LAT(LED3_PIN)
-#define BOARD_LED4                     _LAT(LED4_PIN)
 
 /*
 ******************************************************************************

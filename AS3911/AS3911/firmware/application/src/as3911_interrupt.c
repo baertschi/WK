@@ -43,7 +43,6 @@
 #include "as3911_com.h"
 #include "config.h"
 #include "ic.h"
-#include "led.h"
 #include "delay.h"
 #include "as3911.h"
 #include "board.h"

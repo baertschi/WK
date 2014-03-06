@@ -22,17 +22,12 @@
       <itemPath>../src/platform.h</itemPath>
       <itemPath>../src/utils.h</itemPath>
       <itemPath>../../../../common/firmware/microchip/include/ams_types.h</itemPath>
-      <itemPath>../../../../common/firmware/microchip/include/AmsCom.h</itemPath>
       <itemPath>../../../../common/firmware/microchip/include/bootloadable.h</itemPath>
       <itemPath>../../../../common/firmware/microchip/include/Compiler.h</itemPath>
-      <itemPath>../../../../common/firmware/microchip/include/debug.h</itemPath>
       <itemPath>../../../../common/firmware/microchip/include/errno.h</itemPath>
       <itemPath>../../../../common/firmware/microchip/include/GenericTypeDefs.h</itemPath>
-      <itemPath>../../../../common/firmware/microchip/include/i2c_driver.h</itemPath>
       <itemPath>../../../../common/firmware/microchip/include/spi_driver.h</itemPath>
       <itemPath>../../../../common/firmware/microchip/include/system_clock.h</itemPath>
-      <itemPath>../../../../common/firmware/microchip/include/timer_driver.h</itemPath>
-      <itemPath>../../../../common/include/ams_stream.h</itemPath>
       <itemPath>../src/uart2.h</itemPath>
       <itemPath>../src/uart_state.h</itemPath>
       <itemPath>../src/timer1.h</itemPath>
