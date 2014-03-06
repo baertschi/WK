@@ -1,0 +1,81 @@
+diff --git a/Firmware/application/src/nfc.c b/Firmware/application/src/nfc.c
+--- a/Firmware/application/src/nfc.c
++++ b/Firmware/application/src/nfc.c
+@@ -59,7 +59,7 @@
+ #define NFC_DEBUG_HEX_DUMP(...)
+ 
+ 
+-/*! Sanity timeout for initial and response RC collision avoidance completed interrupt (milliseconds). */
++/*! Sanity timeout for initial and response RF collision avoidance completed interrupt (milliseconds). */
+ #define NFC_RFCA_IRQ_TIMEOUT    10
+ 
+ /*! Sanity timeout for oscillator activation after a bitrate detection interrupt (milliseconds). */
+@@ -69,7 +69,7 @@
+ #define NFC_RX_BUFFER_SIZE  256
+ 
+ /*! Number of bytes read from the AS3911 when handling a fifo water level irq. */
+-#define NFC_FIFO_READ_SIZE  64
++#define NFC_FIFO_READ_SIZE  32
+ 
+ /*! Response RF collision avoidance timeout is 8192 carrier cycles. */
+ #define RESPONSE_RFCA_NRT1  0x00
+@@ -601,19 +601,54 @@ s8 nfcReceptionTask()
+             nfcRxError = ERR_TIMEOUT;
+         }
+         
++         
+         if (NFC_TASK_WAIT_FOR_EOF == nfcTaskStatus)
+         {
+-            u8 fifoReadSize = 0;
++            u8 fifoStatus[2];
+        
+             /* silicon bug: under some circumstances the first readout of the
+              * fifo rx status may contain an incorrect results.
+              */
+-            err |= as3911ReadRegister(AS3911_REG_FIFO_RX_STATUS1, &fifoReadSize);
+-            err |= as3911ReadRegister(AS3911_REG_FIFO_RX_STATUS1, &fifoReadSize);
+-            as3911ReadFifo(nfcRxBufferInPtr, fifoReadSize);
++            err |= as3911ReadMultipleRegisters(AS3911_REG_FIFO_RX_STATUS1, &fifoStatus[0], 2);
++            err |= as3911ReadMultipleRegisters(AS3911_REG_FIFO_RX_STATUS1, &fifoStatus[0], 2);
++            
++            if (fifoStatus[1] & AS3911_REG_FIFO_RX_STATUS2_fifo_unf)
++            {
++                NFC_DEBUG("FIFO underflow during reception");
++                nfcRxError = ERR_FIFO;
++            }
++            else if (fifoStatus[1] & AS3911_REG_FIFO_RX_STATUS2_fifo_ovr)
++            {
++                NFC_DEBUG("FIFO overflow during reception");
++                nfcRxError = ERR_FIFO;
++            }
++            else if (fifoStatus[1] & (AS3911_REG_FIFO_RX_STATUS2_fifo_ncp | AS3911_REG_FIFO_RX_STATUS2_fifo_ncp))
++            {
++                nfcRxError = ERR_FRAMING;
++            }
++            else
++            {
++                u8 fifoReadSize = fifoStatus[0];
++                if (fifoReadSize > (sizeof(nfcRxBuffer) - (nfcRxBufferInPtr - nfcRxBuffer)))
++                {
++                    fifoReadSize = (sizeof(nfcRxBuffer) - (nfcRxBufferInPtr - nfcRxBuffer));
++                }
++                as3911ReadFifo(nfcRxBufferInPtr, fifoStatus[0]);
+             nfcRxBufferInPtr += fifoReadSize;
++
++                irqs = as3911GetInterrupt(AS3911_IRQ_MASK_CRC | AS3911_IRQ_MASK_PAR | AS3911_IRQ_MASK_ERR2 | AS3911_IRQ_MASK_ERR1);
++                if (irqs & AS3911_IRQ_MASK_CRC)
++                    nfcRxError = ERR_CRC;
++                else if (irqs & AS3911_IRQ_MASK_PAR)
++                    nfcRxError = ERR_PAR;
++                else if ((irqs & AS3911_IRQ_MASK_ERR1) || (irqs & AS3911_IRQ_MASK_ERR2))
++                    nfcRxError = ERR_FRAMING;
++                else if (0 != irqs)
++                    nfcRxError = ERR_FRAMING;
++                else
++                    nfcRxError = ERR_NONE;
++            }
+             nfcTaskStatus = NFC_TASK_RX_DONE;
+-            nfcRxError = ERR_NONE;
+ 
+             /* Stop NRE timer via a clear fifo cmd. */
+             as3911ExecuteCommand(AS3911_CMD_CLEAR_FIFO);
